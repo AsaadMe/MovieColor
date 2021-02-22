@@ -1,10 +1,13 @@
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageTk
 import argparse
 import ffmpeg
 import logging
 import numpy as np
 import subprocess
-
+import tkinter as tk
+import threading
+import os
+import time
 
 parser = argparse.ArgumentParser()
 parser.add_argument('in_filename', help='Input filename')
@@ -72,7 +75,7 @@ def draw_output(rgb_list, out_filename):
     for rgb_tuple in rgb_list:
         draw.line((x_pixel,0,x_pixel,image_height), fill=rgb_tuple)
         x_pixel = x_pixel + 1
-    new.show() 
+    #new.show() 
     new.save(f"{out_filename}.png", "PNG")
 
 
@@ -90,15 +93,39 @@ def run(in_filename, out_filename, length, process_frame):
         out_frame_average_color = process_frame(in_frame, height, width)      
         rgb_list.append(out_frame_average_color)
 
+        draw_output(rgb_list, out_filename)
+      
     
 
     logger.info('Waiting for ffmpeg process1')
     process1.wait()
 
-    draw_output(rgb_list, out_filename)
+    #draw_output(rgb_list, out_filename)
     logger.info('Done')
 
+def refresh_image(canvas, img, image_path, image_id):
+    try:
+        pil_img = Image.open(image_path).resize((400,400), Image.ANTIALIAS)
+        img = ImageTk.PhotoImage(pil_img)
+        canvas.itemconfigure(image_id, image=img)
+    except IOError:  # missing or corrupt image file
+        img = None
+    # repeat every half sec
+    canvas.after(500, refresh_image, canvas, img, image_path, image_id)
 
 if __name__ == '__main__':
+    root = tk.Tk()
     args = parser.parse_args()
-    run(args.in_filename, args.out_filename.split(".")[0], args.length ,process_frame_average_color)
+    th = threading.Thread(target=run, args=(args.in_filename, args.out_filename.split(".")[0], args.length ,process_frame_average_color))
+    th.daemon = True  # terminates whenever main thread does
+    th.start()
+    while not os.path.exists(f"{args.out_filename.split('.')[0]}.png"):  # let it run until image file exists
+        time.sleep(.1)
+
+    canvas = tk.Canvas(root, height=400, width=400)
+    img = None  # initially only need a canvas image place-holder
+    image_id = canvas.create_image(200, 200, image=img)
+    canvas.pack()
+
+    refresh_image(canvas, img, args.out_filename.split(".")[0]+".png", image_id)
+    root.mainloop()
