@@ -6,7 +6,7 @@ import numpy as np
 import subprocess
 
 
-parser = argparse.ArgumentParser(description='Example streaming ffmpeg numpy processing')
+parser = argparse.ArgumentParser()
 parser.add_argument('in_filename', help='Input filename')
 parser.add_argument('-o','--out_filename', type=str, default='result', help='Output filename')
 parser.add_argument('-l','--length', type=int, default=200 , help='length of video from start in Minutes')
