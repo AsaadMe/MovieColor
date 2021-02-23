@@ -4,7 +4,9 @@ import ffmpeg
 import logging
 import numpy as np
 import subprocess
-
+import tkinter as tk
+import threading
+import time
 
 parser = argparse.ArgumentParser()
 parser.add_argument('in_filename', help='Input filename')
@@ -14,6 +16,8 @@ parser.add_argument('-l','--length', type=int, default=200 , help='length of vid
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
+rgb_list = []
+bars_flag = 0
 
 def get_video_size(filename):
     logger.info('Getting video size for {!r}'.format(filename))
@@ -62,9 +66,8 @@ def process_frame_average_color(frame, height, width):
     return rgb_avg
 
 
-
 def draw_output(rgb_list, out_filename):
-    image_height = 720 # OR --> int(len(rgb_list)*9/16) to make a 16:9
+    image_height = int(len(rgb_list)*9/16) # to make a 16:9
     new = Image.new('RGB',(len(rgb_list),image_height))
     draw = ImageDraw.Draw(new)
 
@@ -72,12 +75,12 @@ def draw_output(rgb_list, out_filename):
     for rgb_tuple in rgb_list:
         draw.line((x_pixel,0,x_pixel,image_height), fill=rgb_tuple)
         x_pixel = x_pixel + 1
-    new.show() 
+    #new.show() 
     new.save(f"{out_filename}.png", "PNG")
 
 
 def run(in_filename, out_filename, length, process_frame):
-    rgb_list = []
+    
     width, height = get_video_size(in_filename)
     process1 = start_ffmpeg_process1(in_filename, length)
     while True:
@@ -87,18 +90,40 @@ def run(in_filename, out_filename, length, process_frame):
             break
 
         logger.debug('Processing frame')
-        out_frame_average_color = process_frame(in_frame, height, width)      
+        out_frame_average_color = process_frame(in_frame, height, width)
+        global rgb_list      
         rgb_list.append(out_frame_average_color)
 
-    
-
+    global bars_flag
+    bars_flag = len(rgb_list)
+    draw_output(rgb_list, out_filename)
+      
     logger.info('Waiting for ffmpeg process1')
     process1.wait()
 
-    draw_output(rgb_list, out_filename)
     logger.info('Done')
 
+def refresh_image(canvas):
+    x_pixel = 1 # x axis of the next line to draw
+    image_height = 720
+    for rgb_tuple in rgb_list:
+        canvas.create_line((x_pixel,0,x_pixel,image_height), fill='#%02x%02x%02x' % rgb_tuple)
+        x_pixel = x_pixel + 0.5
+    # repeat every half sec
+    if len(rgb_list) != bars_flag:
+        canvas.after(100, refresh_image, canvas)
 
 if __name__ == '__main__':
+    root = tk.Tk()
     args = parser.parse_args()
-    run(args.in_filename, args.out_filename.split(".")[0], args.length ,process_frame_average_color)
+    th = threading.Thread(target=run, args=(args.in_filename, args.out_filename.split(".")[0], args.length ,process_frame_average_color))
+    th.daemon = True  # terminates whenever main thread does
+    th.start()
+    while len(rgb_list) == 0:  # rgb_list in refresh_image shouldnt be empty
+        time.sleep(.1)
+
+    canvas = tk.Canvas(root, height=400, width=1800)
+    canvas.pack()
+
+    refresh_image(canvas)
+    root.mainloop()
