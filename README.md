@@ -2,7 +2,7 @@
 
 Get an average color of video frames each in a bar like this example:
 
-![image of test output](doc/result.png)
+![image of test output](doc/outresult.png)
 
 ## Usage:
 
