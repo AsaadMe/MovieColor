@@ -108,7 +108,7 @@ def refresh_image(canvas):
     image_height = 720
     for rgb_tuple in rgb_list:
         canvas.create_line((x_pixel,0,x_pixel,image_height), fill='#%02x%02x%02x' % rgb_tuple)
-        x_pixel = x_pixel + 0.1
+        x_pixel = x_pixel + 0.5
     # repeat every half sec
     if len(rgb_list) != bars_flag:
         canvas.after(100, refresh_image, canvas)
@@ -122,7 +122,7 @@ if __name__ == '__main__':
     while len(rgb_list) == 0:  # rgb_list in refresh_image shouldnt be empty
         time.sleep(.1)
 
-    canvas = tk.Canvas(root, height=400, width=1000)
+    canvas = tk.Canvas(root, height=400, width=1800)
     canvas.pack()
 
     refresh_image(canvas)
