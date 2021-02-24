@@ -59,9 +59,7 @@ def read_frame(process1, width, height):
     return frame
 
 
-def process_frame_average_color(frame, height, width):
-    frame =  np.frombuffer(frame, dtype='uint8')
-    frame = frame.reshape((height,width,3))    
+def process_frame_average_color(frame):   
     rgb_avg = int(np.average(frame[:,:,0])),int(np.average(frame[:,:,1])),int(np.average(frame[:,:,2]))
     return rgb_avg
 
@@ -75,7 +73,7 @@ def draw_output(rgb_list, out_filename):
     for rgb_tuple in rgb_list:
         draw.line((x_pixel,0,x_pixel,image_height), fill=rgb_tuple)
         x_pixel = x_pixel + 1
-    #new.show() 
+ 
     new.save(f"{out_filename}.png", "PNG")
 
 
@@ -90,7 +88,7 @@ def run(in_filename, out_filename, length, process_frame):
             break
 
         logger.debug('Processing frame')
-        out_frame_average_color = process_frame(in_frame, height, width)
+        out_frame_average_color = process_frame(in_frame)
         global rgb_list      
         rgb_list.append(out_frame_average_color)
 
@@ -109,7 +107,7 @@ def refresh_image(canvas):
     for rgb_tuple in rgb_list:
         canvas.create_line((x_pixel,0,x_pixel,image_height), fill='#%02x%02x%02x' % rgb_tuple)
         x_pixel = x_pixel + 0.5
-    # repeat every half sec
+
     if len(rgb_list) != bars_flag:
         canvas.after(100, refresh_image, canvas)
 
@@ -122,7 +120,7 @@ if __name__ == '__main__':
     while len(rgb_list) == 0:  # rgb_list in refresh_image shouldnt be empty
         time.sleep(.1)
 
-    canvas = tk.Canvas(root, height=400, width=1800)
+    canvas = tk.Canvas(root, height=400, width=1600)
     canvas.pack()
 
     refresh_image(canvas)
