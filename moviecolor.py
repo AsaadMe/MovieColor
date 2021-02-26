@@ -1,4 +1,5 @@
 from PIL import Image, ImageDraw
+from pathlib import Path
 import argparse
 import ffmpeg
 import logging
@@ -9,9 +10,9 @@ import threading
 import time
 
 parser = argparse.ArgumentParser()
-parser.add_argument('in_filename', help='Input filename')
-parser.add_argument('-o','--out_filename', type=str, default='result', help='Output filename')
-parser.add_argument('-l','--length', type=int, default=200 , help='length of video from start in Minutes')
+parser.add_argument('in_filename', type=Path, help='Input filename')
+parser.add_argument('-o','--out_filename', type=Path, default='result', help='Output filename')
+parser.add_argument('-l','--length', type=int, default=200 , help='Chosen part of the video from start in Minutes')
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -19,9 +20,9 @@ logging.basicConfig(level=logging.INFO)
 rgb_list = []
 bars_flag = 0
 
-def get_video_size(filename):
-    logger.info('Getting video size for {!r}'.format(filename))
-    probe = ffmpeg.probe(filename)
+def get_video_size(filepath):
+    logger.info('Getting video size for {!r}'.format(filepath))
+    probe = ffmpeg.probe(filepath)
     video_info = next(s for s in probe['streams'] if s['codec_type'] == 'video')
     width = int(video_info['width'])
     height = int(video_info['height'])
@@ -64,7 +65,7 @@ def process_frame_average_color(frame):
     return rgb_avg
 
 
-def draw_output(rgb_list, out_filename):
+def draw_output(rgb_list, out_path):
     image_height = int(len(rgb_list)*9/16) # to make a 16:9
     new = Image.new('RGB',(len(rgb_list),image_height))
     draw = ImageDraw.Draw(new)
@@ -73,14 +74,22 @@ def draw_output(rgb_list, out_filename):
     for rgb_tuple in rgb_list:
         draw.line((x_pixel,0,x_pixel,image_height), fill=rgb_tuple)
         x_pixel = x_pixel + 1
- 
-    new.save(f"{out_filename}.png", "PNG")
-
-
-def run(in_filename, out_filename, length, process_frame):
     
-    width, height = get_video_size(in_filename)
-    process1 = start_ffmpeg_process1(in_filename, length)
+    if out_path.suffix.lower() == ".jpg":
+        suff = "JPEG"
+    elif out_path.suffix.lower() == "png":
+        suff = "PNG"
+    else:
+        suff = "PNG"
+        out_path = str(out_path) + ".png"
+
+    new.save(out_path, suff)
+
+
+def run(in_path, out_filename, length, process_frame):
+    
+    width, height = get_video_size(in_path)
+    process1 = start_ffmpeg_process1(in_path, length)
     while True:
         in_frame = read_frame(process1, width, height)
         if in_frame is None:
@@ -114,7 +123,21 @@ def refresh_image(canvas):
 if __name__ == '__main__':
     root = tk.Tk()
     args = parser.parse_args()
-    th = threading.Thread(target=run, args=(args.in_filename, args.out_filename.split(".")[0], args.length ,process_frame_average_color))
+
+    input_file_path = args.in_filename
+    
+    if not input_file_path.is_file():
+        print(
+        "\nEnter Valid input Path.\n"
+        "Example (on windows): \"c:\\video\\input with white space.mp4\"\n"
+        "Example (on linux): /home/video/file.mp4"
+        )
+        exit()
+
+    output_file_path = args.out_filename
+    video_length = args.length
+
+    th = threading.Thread(target=run, args=(input_file_path, output_file_path, video_length ,process_frame_average_color))
     th.daemon = True  # terminates whenever main thread does
     th.start()
     while len(rgb_list) == 0:  # rgb_list in refresh_image shouldnt be empty
