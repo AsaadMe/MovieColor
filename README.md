@@ -6,10 +6,11 @@ Get an average color of video frames each in a bar like this example:
 
 ## Usage:
 
-Install python dependencies in virtual envirement (in Windows):
+Install python dependencies in Virtual Environment:
 ```
 python -m venv venv
-venv\Scripts\activate
+venv\Scripts\activate (on Windows)
+source venv/bin/activate (on Linux)
 pip install -r requirements.txt
 ```
 Run it with:

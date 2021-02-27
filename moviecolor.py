@@ -77,7 +77,7 @@ def draw_output(rgb_list, out_path):
     
     if out_path.suffix.lower() == ".jpg":
         suff = "JPEG"
-    elif out_path.suffix.lower() == "png":
+    elif out_path.suffix.lower() == ".png":
         suff = "PNG"
     else:
         suff = "PNG"
