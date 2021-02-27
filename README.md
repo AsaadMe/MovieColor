@@ -1,8 +1,12 @@
 # MovieColor
 
-Get an average color of video frames each in a bar like this example:
+Create a "MovieBarcode" using average color of each frame as bars:
 
 ![image of test output](doc/outresult.png)
+
+or using shrinked frames as bars (with `--alt` argument):
+
+![image of test output2](doc/outresult2.jpg)
 
 ## Usage:
 
@@ -15,9 +19,11 @@ pip install -r requirements.txt
 ```
 Run it with:
 ```
-python moviecolor.py input.mp4 [-l 30] [-o output_name] [--help]
+python moviecolor.py input.mp4 [-l 30] [-o output_name] [--alt] [--help]
 ```
 >-l , --length: chosen part of the video from start (in Minutes)
+
+>-a , --alt: instead of using average color, use shrinked frames
 
 
 ![Usage](doc/usage.gif)

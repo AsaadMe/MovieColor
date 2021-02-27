@@ -1,4 +1,4 @@
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageTk
 from pathlib import Path
 import argparse
 import ffmpeg
@@ -10,9 +10,10 @@ import threading
 import time
 
 parser = argparse.ArgumentParser()
-parser.add_argument('in_filename', type=Path, help='Input filename')
-parser.add_argument('-o','--out_filename', type=Path, default='result', help='Output filename')
+parser.add_argument('in_file', type=Path, help='Input file path')
+parser.add_argument('-o','--out_filename', type=Path, default='result', help='Output file path')
 parser.add_argument('-l','--length', type=int, default=200 , help='Chosen part of the video from start in Minutes')
+parser.add_argument('-a','--alt', action='store_true', help='Instead of gettig average color of frames, Each bar is the resized frame')
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -64,16 +65,25 @@ def process_frame_average_color(frame):
     rgb_avg = int(np.average(frame[:,:,0])),int(np.average(frame[:,:,1])),int(np.average(frame[:,:,2]))
     return rgb_avg
 
+def process_frame_compress_width(frame):
+    img = Image.fromarray(frame, 'RGB').resize((1,720))
+    return img
 
 def draw_output(rgb_list, out_path):
-    image_height = int(len(rgb_list)*9/16) # to make a 16:9
-    new = Image.new('RGB',(len(rgb_list),image_height))
-    draw = ImageDraw.Draw(new)
+    len_rgb_list = len(rgb_list)
+    image_height = int(len_rgb_list*9/16) # to make a 16:9
+    new = Image.new('RGB',(int(len_rgb_list/2),720))
+    
+    if args.alt:
+        for i in range(len_rgb_list-1):      
+            new.paste(rgb_list[i], (int(i/2), 0))
 
-    x_pixel = 1 # x axis of the next line to draw
-    for rgb_tuple in rgb_list:
-        draw.line((x_pixel,0,x_pixel,image_height), fill=rgb_tuple)
-        x_pixel = x_pixel + 1
+    else:
+        draw = ImageDraw.Draw(new)
+        x_pixel = 1 # x axis of the next line to draw
+        for rgb_tuple in rgb_list:
+            draw.line((x_pixel,0,x_pixel,image_height), fill=rgb_tuple)
+            x_pixel = x_pixel + 1
     
     if out_path.suffix.lower() == ".jpg":
         suff = "JPEG"
@@ -97,9 +107,9 @@ def run(in_path, out_filename, length, process_frame):
             break
 
         logger.debug('Processing frame')
-        out_frame_average_color = process_frame(in_frame)
+        out_frame = process_frame(in_frame)
         global rgb_list      
-        rgb_list.append(out_frame_average_color)
+        rgb_list.append(out_frame)
 
     global bars_flag
     bars_flag = len(rgb_list)
@@ -110,21 +120,38 @@ def run(in_path, out_filename, length, process_frame):
 
     logger.info('Done')
 
-def refresh_image(canvas):
-    x_pixel = 1 # x axis of the next line to draw
-    image_height = 720
-    for rgb_tuple in rgb_list:
-        canvas.create_line((x_pixel,0,x_pixel,image_height), fill='#%02x%02x%02x' % rgb_tuple)
-        x_pixel = x_pixel + 0.5
+def refresh_image(canvas, x_pixel, *param):
+    if args.alt:
+        image_height = 720 # to make a 16:9
+        dst = Image.new('RGB', (2000, 720))
 
-    if len(rgb_list) != bars_flag:
-        canvas.after(100, refresh_image, canvas)
+        if len(param) != 0 : 
+            dst = param[0]
+
+        for rgb_tuple in rgb_list[int(x_pixel*10)-1:]: 
+            dst.paste(rgb_tuple, (int(x_pixel), 0))
+            x_pixel += 0.1
+        global image
+        image = ImageTk.PhotoImage(dst)
+        canvas.create_image((1000, 300), image=image)
+    
+        if len(rgb_list) != bars_flag:
+            canvas.after(100, refresh_image, canvas, x_pixel, dst)
+
+    else:        
+        image_height = 720
+        for rgb_tuple in rgb_list[int(x_pixel-1)*2:]:
+            canvas.create_line((x_pixel,0,x_pixel,image_height), fill='#%02x%02x%02x' % rgb_tuple)
+            x_pixel = x_pixel + 0.5
+
+        if len(rgb_list) != bars_flag:
+            canvas.after(100, refresh_image, canvas, x_pixel)
 
 if __name__ == '__main__':
     root = tk.Tk()
     args = parser.parse_args()
 
-    input_file_path = args.in_filename
+    input_file_path = args.in_file
     
     if not input_file_path.is_file():
         print(
@@ -137,14 +164,20 @@ if __name__ == '__main__':
     output_file_path = args.out_filename
     video_length = args.length
 
-    th = threading.Thread(target=run, args=(input_file_path, output_file_path, video_length ,process_frame_average_color))
+    if args.alt:
+        process_func = process_frame_compress_width
+    else:
+        process_func = process_frame_average_color
+
+    th = threading.Thread(target=run, args=(input_file_path, output_file_path, video_length ,process_func))
     th.daemon = True  # terminates whenever main thread does
     th.start()
     while len(rgb_list) == 0:  # rgb_list in refresh_image shouldnt be empty
         time.sleep(.1)
 
-    canvas = tk.Canvas(root, height=400, width=1600)
+    canvas = tk.Canvas(root, height=720, width=1500)
+    root.geometry("1500x720+0+10")
     canvas.pack()
 
-    refresh_image(canvas)
+    refresh_image(canvas, 1)
     root.mainloop()
