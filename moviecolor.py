@@ -176,6 +176,7 @@ if __name__ == '__main__':
         time.sleep(.1)
 
     canvas = tk.Canvas(root, height=720, width=1500)
+    root.title("MovieColor")
     root.geometry("1500x720+0+10")
     canvas.pack()
 
