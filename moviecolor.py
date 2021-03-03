@@ -12,7 +12,7 @@ import time
 parser = argparse.ArgumentParser()
 parser.add_argument('in_file', type=Path, help='Input file path')
 parser.add_argument('-o','--out_filename', type=Path, default='result', help='Output file path')
-parser.add_argument('-l','--length', type=int, default=200 , help='Chosen part of the video from start in Minutes')
+parser.add_argument('-l','--length', type=int, default=0 , help='Chosen part of the video from start in Minutes')
 parser.add_argument('-a','--alt', action='store_true', help='Instead of gettig average color of frames, Each bar is the resized frame')
 
 logger = logging.getLogger(__name__)
@@ -20,6 +20,12 @@ logging.basicConfig(level=logging.INFO)
 
 rgb_list = []
 bars_flag = 0
+
+def get_video_duration(filepath):
+    probe = ffmpeg.probe(filepath)
+    video_info = next(s for s in probe['streams'] if s['codec_type'] == 'video')
+    duration = int(video_info['duration'].split('.')[0])
+    return duration
 
 def get_video_size(filepath):
     logger.info('Getting video size for {!r}'.format(filepath))
@@ -36,7 +42,7 @@ def start_ffmpeg_process1(in_filename, length):
         ffmpeg
         .input(in_filename)
         .trim(end=length*60)
-        .filter_('fps',fps=3)
+        .filter_('fps',fps=3) # get 3 frames per second
         .output('pipe:', format='rawvideo', pix_fmt='rgb24')
         .compile()
     )
@@ -71,14 +77,15 @@ def process_frame_compress_width(frame):
 
 def draw_output(rgb_list, out_path):
     len_rgb_list = len(rgb_list)
-    image_height = int(len_rgb_list*9/16) # to make a 16:9
-    new = Image.new('RGB',(int(len_rgb_list/2),720))
     
     if args.alt:
+        new = Image.new('RGB',(int(len_rgb_list/2),720))
         for i in range(len_rgb_list-1):      
             new.paste(rgb_list[i], (int(i/2), 0))
 
     else:
+        image_height = int(len_rgb_list*9/16) # to make a 16:9
+        new = Image.new('RGB',(int(len_rgb_list),image_height))
         draw = ImageDraw.Draw(new)
         x_pixel = 1 # x axis of the next line to draw
         for rgb_tuple in rgb_list:
@@ -120,9 +127,8 @@ def run(in_path, out_filename, length, process_frame):
 
     logger.info('Done')
 
-def refresh_image(canvas, x_pixel, *param):
+def refresh_image(canvas, x_pixel, number_of_frames, *param):
     if args.alt:
-        image_height = 720 # to make a 16:9
         dst = Image.new('RGB', (2000, 720))
 
         if len(param) != 0 : 
@@ -136,16 +142,17 @@ def refresh_image(canvas, x_pixel, *param):
         canvas.create_image((1000, 300), image=image)
     
         if len(rgb_list) != bars_flag:
-            canvas.after(100, refresh_image, canvas, x_pixel, dst)
+            canvas.after(100, refresh_image, canvas, x_pixel, number_of_frames, dst)
 
     else:        
         image_height = 720
-        for rgb_tuple in rgb_list[int(x_pixel-1)*2:]:
-            canvas.create_line((x_pixel,0,x_pixel,image_height), fill='#%02x%02x%02x' % rgb_tuple)
-            x_pixel = x_pixel + 0.5
+        step = 1500 / number_of_frames
+        for rgb_tuple in rgb_list[int((x_pixel-1)*(1/step)):]:
+            canvas.create_line((x_pixel,0,x_pixel,image_height), fill='#%02x%02x%02x' % rgb_tuple, width=step)
+            x_pixel = x_pixel + step
 
         if len(rgb_list) != bars_flag:
-            canvas.after(100, refresh_image, canvas, x_pixel)
+            canvas.after(100, refresh_image, canvas, x_pixel-step, number_of_frames)
 
 if __name__ == '__main__':
     root = tk.Tk()
@@ -163,6 +170,12 @@ if __name__ == '__main__':
 
     output_file_path = args.out_filename
     video_length = args.length
+    if video_length != 0:
+        number_of_frames = video_length * 60 * 3
+    else:
+        duration = get_video_duration(input_file_path)
+        number_of_frames = duration * 3
+        video_length = int(duration/60)
 
     if args.alt:
         process_func = process_frame_compress_width
@@ -180,5 +193,5 @@ if __name__ == '__main__':
     root.geometry("1500x720+0+10")
     canvas.pack()
 
-    refresh_image(canvas, 1)
+    refresh_image(canvas, 1, number_of_frames)
     root.mainloop()
