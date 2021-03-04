@@ -79,7 +79,8 @@ def draw_output(rgb_list, out_path):
     len_rgb_list = len(rgb_list)
     
     if args.alt:
-        new = Image.new('RGB',(int(len_rgb_list/2),720))
+        image_height = int(len_rgb_list*9/16) # to make a 16:9
+        new = Image.new('RGB',(int(len_rgb_list/2),image_height))
         for i in range(len_rgb_list-1):      
             new.paste(rgb_list[i], (int(i/2), 0))
 
@@ -129,17 +130,18 @@ def run(in_path, out_filename, length, process_frame):
 
 def refresh_image(canvas, x_pixel, number_of_frames, *param):
     if args.alt:
-        dst = Image.new('RGB', (2000, 720))
+        dst = Image.new('RGB', (1500, 720))
 
         if len(param) != 0 : 
             dst = param[0]
 
-        for rgb_tuple in rgb_list[int(x_pixel*10)-1:]: 
+        step = 1500 / number_of_frames
+        for rgb_tuple in rgb_list[int((x_pixel-1)*(1/step)):]: 
             dst.paste(rgb_tuple, (int(x_pixel), 0))
-            x_pixel += 0.1
+            x_pixel += step
         global image
         image = ImageTk.PhotoImage(dst)
-        canvas.create_image((1000, 300), image=image)
+        canvas.create_image((750, 360), image=image)
     
         if len(rgb_list) != bars_flag:
             canvas.after(100, refresh_image, canvas, x_pixel, number_of_frames, dst)
