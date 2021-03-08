@@ -5,12 +5,12 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="moviecolor",
-    version="1.0.2",
+    version="1.0.4",
     author="Mehran Asaad",
     author_email = 'mehran.asaad@gmail.com',
     license='MIT',
     url = 'https://github.com/AsaadMe/MovieColor',
-    download_url = 'https://github.com/AsaadMe/MovieColor/releases/tag/v1.0.2',
+    download_url = 'https://github.com/AsaadMe/MovieColor/releases/tag/v1.0.4',
     keywords = ['moviebarcode'],
     description="Fast program to generate a 'Moviebarcode' of a video from average color of its frames with embedded ffmpeg and real-time progress interface.",
     long_description=long_description,
@@ -21,7 +21,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.9',
+    python_requires='>=3.8',
     install_requires=[
         'ffmpeg-python==0.2.0',
         'future==0.18.2',
