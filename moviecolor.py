@@ -128,33 +128,33 @@ def run(in_path, out_filename, length, process_frame):
 
     logger.info('Done')
 
-def refresh_image(canvas, x_pixel, number_of_frames, *param):
-    if args.alt:
-        dst = Image.new('RGB', (1500, 720))
-
-        if len(param) != 0 : 
-            dst = param[0]
-
-        step = 1500 / number_of_frames
-        for rgb_tuple in rgb_list[int((x_pixel-1)*(1/step)):]: 
-            dst.paste(rgb_tuple, (int(x_pixel), 0))
-            x_pixel += step
-        global image
-        image = ImageTk.PhotoImage(dst)
-        canvas.create_image((750, 360), image=image)
+def refresh_image_alt(canvas, x_pixel, number_of_frames, *param):
     
-        if len(rgb_list) != bars_flag:
-            canvas.after(100, refresh_image, canvas, x_pixel, number_of_frames, dst)
+    dst = Image.new('RGB', (1500, 720))
 
-    else:        
-        image_height = 720
-        step = 1500 / number_of_frames
-        for rgb_tuple in rgb_list[int((x_pixel-1)*(1/step)):]:
-            canvas.create_line((x_pixel,0,x_pixel,image_height), fill='#%02x%02x%02x' % rgb_tuple, width=step)
-            x_pixel = x_pixel + step
+    if len(param) != 0 : 
+        dst = param[0]
 
-        if len(rgb_list) != bars_flag:
-            canvas.after(100, refresh_image, canvas, x_pixel-step, number_of_frames)
+    step = 1500 / number_of_frames
+    for rgb_tuple in rgb_list[int((x_pixel-1)*(1/step)):]: 
+        dst.paste(rgb_tuple, (int(x_pixel), 0))
+        x_pixel += step
+    global image
+    image = ImageTk.PhotoImage(dst)
+    canvas.create_image((750, 360), image=image)
+
+    if len(rgb_list) != bars_flag:
+        canvas.after(100, refresh_image_alt, canvas, x_pixel, number_of_frames, dst)
+
+def refresh_image_normal(canvas, x_pixel, number_of_frames):        
+    image_height = 720
+    step = 1500 / number_of_frames
+    for rgb_tuple in rgb_list[int((x_pixel-1)*(1/step)):]:
+        canvas.create_line((x_pixel,0,x_pixel,image_height), fill='#%02x%02x%02x' % rgb_tuple, width=step)
+        x_pixel = x_pixel + step
+
+    if len(rgb_list) != bars_flag:
+        canvas.after(100, refresh_image_normal, canvas, x_pixel-step, number_of_frames)
 
 if __name__ == '__main__':
     root = tk.Tk()
@@ -181,8 +181,10 @@ if __name__ == '__main__':
 
     if args.alt:
         process_func = process_frame_compress_width
+        refresh_image = refresh_image_alt
     else:
         process_func = process_frame_average_color
+        refresh_image = refresh_image_normal
 
     th = threading.Thread(target=run, args=(input_file_path, output_file_path, video_length ,process_func))
     th.daemon = True  # terminates whenever main thread does
