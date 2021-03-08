@@ -9,17 +9,22 @@ or using shrinked frames as bars (with `--alt` argument):
 ![image of test output2](https://raw.githubusercontent.com/AsaadMe/MovieColor/master/doc/outresult2.jpg)
 
 ## Usage:
-
-Install python dependencies in Virtual Environment:
+Install via pip:
 ```
+pip install moviecolor
+```
+Or clone the project and Install it in Virtual Environment:
+```
+git clone https://github.com/AsaadMe/MovieColor.git
+cd MovieColor
 python -m venv venv
 venv\Scripts\activate (on Windows)
 source venv/bin/activate (on Linux)
-pip install -r requirements.txt
+pip install -e .
 ```
 Run it with:
 ```
-python moviecolor.py input.mp4 [-l 30] [-o output_name] [--alt] [--help]
+moviecolor input.mp4 [-l 30] [-o output_name] [--alt] [--help]
 ```
 >-l , --length: chosen part of the video from start (in Minutes)
 
