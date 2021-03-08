@@ -2,11 +2,11 @@
 
 Create a "MovieBarcode" using average color of each frame as bars:
 
-![image of test output](doc/outresult.png)
+![image of test output](https://github.com/AsaadMe/MovieColor/blob/master/doc/outresult.png)
 
 or using shrinked frames as bars (with `--alt` argument):
 
-![image of test output2](doc/outresult2.jpg)
+![image of test output2](https://github.com/AsaadMe/MovieColor/blob/master/doc/outresult2.jpg)
 
 ## Usage:
 
@@ -26,4 +26,4 @@ python moviecolor.py input.mp4 [-l 30] [-o output_name] [--alt] [--help]
 >-a , --alt: instead of using average color, use shrinked frames
 
 
-![Usage](doc/usage.gif)
+![Usage](https://github.com/AsaadMe/MovieColor/blob/master/doc/usage.gif)

@@ -15,15 +15,13 @@ setuptools.setup(
     description="Fast program to generate a 'Moviebarcode' of a video from average color of its frames with embedded ffmpeg and real-time progress interface.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    packages=setuptools.find_packages(),
+    packages=['Moviecolor'],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.9',
-    py_modules=["moviecolor"],
-    package_dir={'':'MovieColor'},
     install_requires=[
         'ffmpeg-python==0.2.0',
         'future==0.18.2',
