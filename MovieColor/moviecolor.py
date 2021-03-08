@@ -156,7 +156,7 @@ def refresh_image_normal(canvas, x_pixel, number_of_frames):
     if len(rgb_list) != bars_flag:
         canvas.after(100, refresh_image_normal, canvas, x_pixel-step, number_of_frames)
 
-if __name__ == '__main__':
+def main():
     root = tk.Tk()
     args = parser.parse_args()
 
