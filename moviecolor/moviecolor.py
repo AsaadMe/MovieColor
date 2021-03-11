@@ -3,6 +3,7 @@ import ffmpeg
 import logging
 import numpy as np
 import subprocess
+import sys
 
 class movcolor:
 
@@ -22,7 +23,13 @@ class movcolor:
     def get_video_duration(self):
         probe = ffmpeg.probe(self.in_path)
         video_info = next(s for s in probe['streams'] if s['codec_type'] == 'video')
-        duration = int(video_info['duration'].split('.')[0])
+
+        try:
+            duration = int(video_info['duration'].split('.')[0])
+        except:
+            print("ERROR: can't extract duration of the video, please specify it by '-l' option.")
+            sys.exit()
+
         return duration
 
     def get_video_size(self):
