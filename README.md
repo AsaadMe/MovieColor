@@ -8,7 +8,9 @@ or using shrinked frames as bars (with `--alt` argument):
 
 ![image of test output2](https://raw.githubusercontent.com/AsaadMe/MovieColor/master/doc/outresult2.jpg)
 
-## Usage:
+------------------
+## Installation:
+
 Install via pip:
 ```
 pip install moviecolor
@@ -22,6 +24,12 @@ venv\Scripts\activate (on Windows)
 source venv/bin/activate (on Linux)
 pip install -e .
 ```
+
+\* Make sure you have [ffmpeg](https://www.ffmpeg.org/) installed.
+
+----------------
+## Usage:
+
 Run it with:
 ```
 moviecolor input.mp4 [-l 30] [-o output_name] [--alt] [--help]
