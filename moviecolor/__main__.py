@@ -1,10 +1,9 @@
-#from moviecolor import *
+#from moviecolor import movcolor
 from moviecolor.moviecolor import movcolor
 from pathlib import Path
 import tkinter as tk
 import argparse
 import threading
-#import multiprocessing
 import time
 
 parser = argparse.ArgumentParser()
@@ -48,15 +47,10 @@ def main():
         refresh_image = obj1.refresh_image_normal
         draw_func = obj1.draw_normal
 
-    obj2 = movcolor(2,input_file_path, output_file_path.parent / "res2")
     th = threading.Thread(target=obj1, args=(video_length ,process_func, draw_func, 0))
-    #th2 = threading.Thread(target=obj2, args=(10 ,process_func, obj2.draw_normal, 5))
 
-    #th = multiprocessing.Process(target=obj1, args=(video_length ,process_func, draw_func, 0))
-    #th2 = multiprocessing.Process(target=obj2, args=(10 ,process_func, obj2.draw_normal, 5))
     th.daemon = True  # terminates whenever main thread does
     th.start()
-    #th2.start()
     
     while len(obj1.rgb_list) == 0:  # rgb_list in refresh_image shouldnt be empty
         time.sleep(.1)

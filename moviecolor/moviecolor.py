@@ -166,6 +166,7 @@ class movcolor:
             canvas.after(100, self.refresh_image_alt, canvas, x_pixel, number_of_frames, dst)
 
     def refresh_image_normal(self, canvas, x_pixel, number_of_frames):        
+        
         image_height = 720
         step = 1500 / number_of_frames
         for rgb_tuple in self.rgb_list[int((x_pixel-1)*(1/step)):]:
