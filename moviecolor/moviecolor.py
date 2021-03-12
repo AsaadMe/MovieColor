@@ -2,7 +2,6 @@ from PIL import Image, ImageDraw, ImageTk
 import ffmpeg
 import logging
 import numpy as np
-import subprocess
 import sys
 
 class movcolor:
@@ -13,7 +12,7 @@ class movcolor:
     def __call__(self, *args):
         self.run(*args)
 
-    def __init__(self, id, in_path, out_path) -> None:
+    def __init__(self, id, in_path, out_path):
         self.id = id
         self.in_path = in_path
         self.out_path = out_path
@@ -43,23 +42,23 @@ class movcolor:
 
     def start_ffmpeg_process1(self, start, length):
         self.logger.info('Starting ffmpeg process1')
-        args = (
+        process = (
             ffmpeg
             .input(self.in_path)
             .trim(start=start*60, end=length*60)
             .filter_('fps',fps=3) # get 3 frames per second
             .output('pipe:', format='rawvideo', pix_fmt='rgb24')
-            .compile()
+            .run_async(pipe_stdout=True)
         )
-        return subprocess.Popen(args, stdout=subprocess.PIPE)
 
+        return process
 
-    def read_frame(self, process1, width, height):
+    def read_frame(self, process, width, height):
         self.logger.debug('Reading frame')
 
         # Note: RGB24 == 3 bytes per pixel.
         frame_size = width * height * 3
-        in_bytes = process1.stdout.read(frame_size)
+        in_bytes = process.stdout.read(frame_size)
         if len(in_bytes) == 0:
             frame = None
         else:
@@ -124,10 +123,10 @@ class movcolor:
     def run(self, length, process_frame, draw_func, start):
         
         width, height = self.get_video_size()
-        process1 = self.start_ffmpeg_process1(start, length)
+        process = self.start_ffmpeg_process1(start, length)
 
         while True:
-            in_frame = self.read_frame(process1, width, height)
+            in_frame = self.read_frame(process, width, height)
             if in_frame is None:
                 self.logger.info('End of input stream')
                 break
@@ -143,7 +142,7 @@ class movcolor:
 
         
         self.logger.info('Waiting for ffmpeg process1')
-        process1.wait()
+        process.wait()
 
         self.logger.info('Done')
 
