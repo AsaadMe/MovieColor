@@ -4,9 +4,12 @@ in real-time on a tkinter canvas.
 """
 
 import sys
+import time
 import logging
+import threading
 
 from PIL import Image, ImageDraw, ImageTk
+import tkinter as tk
 import numpy as np
 import ffmpeg
 
@@ -23,9 +26,10 @@ class Movcolor:
         - process_frame_compress_width(frame)
         - draw_alt()
         - draw_normal()
-        - run(process_frame, draw_func, start, end)
         - refresh_image_alt(canvas, x_pixel, number_of_frames, *param)
         - refresh_image_normal(canvas, x_pixel, number_of_frames)
+        - worker(process_frame, draw_func, start, end)
+        - run()
     """
 
     logger = logging.getLogger(__name__)
@@ -34,10 +38,31 @@ class Movcolor:
     def __call__(self, *args):
         self.run(*args)
 
-    def __init__(self, instance_id, in_path, out_path):
+    def __init__(self, instance_id, in_path, out_path,
+                start_point, end_point, draw_mode="normal"):
         self.instance_id = instance_id
         self.in_path = in_path
         self.out_path = out_path
+        self.start_point = start_point
+
+        if end_point != 0:
+            self.end_point = end_point
+            self.number_of_frames = end_point * 60 * 3
+        else:
+            duration = self.get_video_duration()
+            self.number_of_frames = duration * 3
+            self.end_point = int(duration/60)
+
+        self.draw_mode = draw_mode
+
+        if self.draw_mode == "alt":
+            self.process_func = self.process_frame_compress_width
+            self.refresh_image = self.refresh_image_alt
+            self.draw_func = self.draw_alt
+        else:
+            self.process_func = self.process_frame_average_color
+            self.refresh_image = self.refresh_image_normal
+            self.draw_func = self.draw_normal
 
         # used in refresh_image funcs to determine when to stop drawing bars
         self.bars_flag = 0
@@ -212,40 +237,6 @@ class Movcolor:
 
         new.save(self.out_path, suff)
 
-    def run(self, process_frame, draw_func, start, end):
-        """run the main functionality of program to save final image.
-
-        Args:
-            process_frame (ffmpeg process object): ffmepg process object
-            which is called here and pass to read_frame.
-
-            draw_func (function): one of two alt or noraml draw function
-            start (int): start time of video in minute
-            end (int): end time of video in minute
-        """
-
-        width, height = self.get_video_size()
-        process = self.start_ffmpeg_process(start, end)
-
-        while True:
-            in_frame = self.read_frame(process, width, height)
-            if in_frame is None:
-                self.logger.info('End of input stream')
-                break
-
-            self.logger.debug('Processing frame')
-            out_frame = process_frame(in_frame)
-
-            self.rgb_list.append(out_frame)
-
-        self.bars_flag = len(self.rgb_list)
-        draw_func()
-
-        self.logger.info('Waiting for ffmpeg process1')
-        process.wait()
-
-        self.logger.info('Done')
-
     def refresh_image_alt(self, canvas, x_pixel, number_of_frames, *param):
         """draw each bar every 0.1 second by calling canvas.after.
         (alt mode)
@@ -293,3 +284,62 @@ class Movcolor:
         if len(self.rgb_list) != self.bars_flag:
             canvas.after(100, self.refresh_image_normal,
                          canvas, x_pixel-step, number_of_frames)
+
+    def worker(self, process_frame, draw_func, start, end):
+        """run the main functionality of program to save final image.
+
+        Args:
+            process_frame (ffmpeg process object): ffmepg process object
+            which is called here and pass to read_frame.
+
+            draw_func (function): one of two alt or noraml draw function
+            start (int): start time of video in minute
+            end (int): end time of video in minute
+        """
+
+        width, height = self.get_video_size()
+        process = self.start_ffmpeg_process(start, end)
+
+        while True:
+            in_frame = self.read_frame(process, width, height)
+            if in_frame is None:
+                self.logger.info('End of input stream')
+                break
+
+            self.logger.debug('Processing frame')
+            out_frame = process_frame(in_frame)
+
+            self.rgb_list.append(out_frame)
+
+        self.bars_flag = len(self.rgb_list)
+        draw_func()
+
+        self.logger.info('Waiting for ffmpeg process1')
+        process.wait()
+
+        self.logger.info('Done')
+
+    def run(self):
+        """run the worker thread and create tkinter canvas to
+        draw bars in real-time base on the --alt arg
+        with it's func or normal draw func.
+        """
+        worker_args = (self.process_func, self.draw_func, self.start_point, self.end_point)
+        work_thread = threading.Thread(target=self.worker, args=worker_args)
+
+        work_thread.daemon = True
+        work_thread.start()
+
+        # rgb_list in refresh_image shouldnt be empty
+        while len(self.rgb_list) == 0:
+            time.sleep(0.1)
+
+        root = tk.Tk()
+        canvas = tk.Canvas(root, height=720, width=1500)
+
+        root.title("MovieColor")
+        root.geometry("1500x720+0+10")
+        canvas.pack()
+
+        self.refresh_image(canvas, 1, self.number_of_frames)
+        root.mainloop()

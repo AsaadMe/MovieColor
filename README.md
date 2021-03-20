@@ -32,9 +32,9 @@ pip install -e .
 
 Run it with:
 ```
-moviecolor input.mp4 [-l 30] [-o output_name] [--alt] [--help]
+moviecolor input.mp4 [-e 30] [-o output_name] [--alt] [--help]
 ```
->-l , --length: chosen part of the video from start (in Minutes)
+>-e , --end: chosen part of the video from start (in Minutes)
 
 >-a , --alt: instead of using average color, use shrinked frames
 
