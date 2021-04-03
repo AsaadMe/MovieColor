@@ -2,13 +2,14 @@
 
 Create a "MovieBarcode" using average color of each frame as bars:
 
-![image of test output](https://raw.githubusercontent.com/AsaadMe/MovieColor/master/doc/outresult.png)
+***Example: John Wick Movie***
+
+![John Wick normal](https://raw.githubusercontent.com/AsaadMe/MovieColor/master/doc/johnwicknormal.jpg)
 
 or using shrinked frames as bars (with `--alt` argument):
 
-![image of test output2](https://raw.githubusercontent.com/AsaadMe/MovieColor/master/doc/outresult2.jpg)
+![John Wick alt](https://raw.githubusercontent.com/AsaadMe/MovieColor/master/doc/johnwickalt.jpg)
 
-------------------
 ## Installation:
 
 Install via pip:
@@ -25,9 +26,8 @@ source venv/bin/activate (on Linux)
 pip install -e .
 ```
 
-\* Make sure you have [ffmpeg](https://www.ffmpeg.org/) installed.
+*\* Make sure you have [ffmpeg](https://www.ffmpeg.org/) installed.*
 
-----------------
 ## Usage:
 
 Run it with:
