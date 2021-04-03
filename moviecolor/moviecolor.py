@@ -88,7 +88,7 @@ class Movcolor:
         except:
             print(
                 """ERROR: can't extract duration of the video,
-                please specify it by '-l' option.""")
+        please specify it by '-e' option.""")
             sys.exit()
 
         return duration
