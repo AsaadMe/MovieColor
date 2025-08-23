@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "moviecolor"
+version = "2.0.0"
+description = "Generate a 'Moviebarcode' of a video using ffmpeg with real-time progress interface."
+keywords = ["moviebarcode", "movie", "barcode"]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pillow>=11.3.0",
+]
+authors = [
+    {name = "Mehran Asaad", email = "mehran.asaad@gmail.com"}
+]
+license = "MIT"
+license-files = ["LICENSE.md"]
+classifiers=[
+        "Programming Language :: Python :: 3",
+        "Operating System :: OS Independent",
+    ]
+
+[project.urls]
+Repository = "https://github.com/AsaadMe/MovieColor"
+
+[project.scripts]
+moviecolor = "moviecolor.__main__:main"

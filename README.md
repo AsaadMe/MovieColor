@@ -12,19 +12,11 @@ or using shrinked frames as bars (with `--alt` argument):
 
 ## Installation:
 
-Install via pip:
+Install with [uv](https://docs.astral.sh/uv/):
 ```
-pip install moviecolor
+uv tool install moviecolor
 ```
-Or clone the project and Install it in Virtual Environment:
-```
-git clone https://github.com/AsaadMe/MovieColor.git
-cd MovieColor
-python -m venv venv
-venv\Scripts\activate (on Windows)
-source venv/bin/activate (on Linux)
-pip install -e .
-```
+Or clone the project and use `uv run moviecolor`.
 
 *\* Make sure you have [ffmpeg](https://www.ffmpeg.org/) installed.*
 
@@ -32,9 +24,13 @@ pip install -e .
 
 Run it with:
 ```
-moviecolor input.mp4 [-e 30] [-o output_name] [--alt] [--help]
+moviecolor input.mp4 [--alt] [--help]
 ```
->-e , --end: chosen part of the video from start (in Minutes)
+
+or without installing:
+```
+uvx moviecolor input.mp4 [--alt] [--help]
+```
 
 >-a , --alt: instead of using average color, use shrinked frames
 
